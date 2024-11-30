@@ -1,237 +1,261 @@
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <limits>
-#include "BookRental.h"
+#include <vector>
+#include <string>
+#include "User.h"
+#include "Admin.h"
+#include "Book.h"
+#include "Transaction.h"
 
 using namespace std;
 
-BookRentalSystem::BookRentalSystem(const string& filename) 
-    : dataFileName(filename), nextBookId(1), nextTransactionId(1) {
-    loadData();
+// Global storage (in a real application, this would be in a database)
+vector<User*> users;
+vector<Book> books;
+vector<Transaction> transactions;
+User* currentUser = nullptr;
+int nextUserId = 1;
+int nextBookId = 1;
+int nextTransactionId = 1;
+
+// Function declarations
+void displayMenu();
+void registerUser();
+void registerAdmin();
+void login();
+void addBook();
+void viewBooks();
+void rentBook();
+void returnBook();
+void viewTransactions();
+
+// Function implementations
+void registerUser() {
+    string username, password, name, email;
+    cout << "\nUser Registration\n";
+    cout << "Enter username: ";
+    cin >> username;
+    cout << "Enter password: ";
+    cin >> password;
+    cout << "Enter name: ";
+    cin.ignore();
+    getline(cin, name);
+    cout << "Enter email: ";
+    cin >> email;
+
+    users.push_back(new User(nextUserId++, username, password, name, email));
+    cout << "User registered successfully!\n";
 }
 
-void BookRentalSystem::addBook(const string& title, const string& author, double price) {
-    Book book;
-    book.id = nextBookId++;
-    book.title = title;
-    book.author = author;
-    book.rentalPrice = price;
-    book.isAvailable = true;
-    books.push_back(book);
-    saveData();
+void registerAdmin() {
+    string username, password, name, email, role;
+    cout << "\nAdmin Registration\n";
+    cout << "Enter username: ";
+    cin >> username;
+    cout << "Enter password: ";
+    cin >> password;
+    cout << "Enter name: ";
+    cin.ignore();
+    getline(cin, name);
+    cout << "Enter email: ";
+    cin >> email;
+    cout << "Enter role: ";
+    cin >> role;
+
+    users.push_back(new Admin(nextUserId++, username, password, name, email, role));
+    cout << "Admin registered successfully!\n";
 }
 
-void BookRentalSystem::editBook(int id, const string& title, const string& author, double price) {
-    Book* book = findBook(id);
-    if (book) {
-        book->title = title;
-        book->author = author;
-        book->rentalPrice = price;
-        saveData();
-    }
-}
+void login() {
+    string username, password;
+    cout << "\nLogin\n";
+    cout << "Enter username: ";
+    cin >> username;
+    cout << "Enter password: ";
+    cin >> password;
 
-void BookRentalSystem::deleteBook(int id) {
-    for (auto it = books.begin(); it != books.end(); ++it) {
-        if (it->id == id) {
-            books.erase(it);
-            saveData();
+    for (User* user : users) {
+        if (user->getUsername() == username && user->verifyPassword(password)) {
+            currentUser = user;
+            cout << "Login successful!\n";
             return;
         }
     }
+    cout << "Invalid username or password.\n";
 }
 
-void BookRentalSystem::displayBooks() const {
-    cout << "\nBook List:\n";
-    cout << "ID\tTitle\tAuthor\tPrice\tStatus\n";
-    cout << "----------------------------------------\n";
-    for (const auto& book : books) {
-        cout << book.id << "\t" 
-             << book.title << "\t" 
-             << book.author << "\t" 
-             << book.rentalPrice << "\t"
-             << (book.isAvailable ? "Available" : "Rented") << "\n";
+void addBook() {
+    if (!currentUser || !currentUser->getIsAdmin()) {
+        cout << "Access denied. Admin privileges required.\n";
+        return;
     }
-}
 
-Book* BookRentalSystem::findBook(int id) {
-    for (auto& book : books) {
-        if (book.id == id) {
-            return &book;
-        }
-    }
-    return nullptr;
-}
-
-void BookRentalSystem::createTransaction(int bookId, const string& customerName, 
-                                       const string& rentDate, const string& returnDate) {
-    Book* book = findBook(bookId);
-    if (book && book->isAvailable) {
-        Transaction trans;
-        trans.id = nextTransactionId++;
-        trans.bookId = bookId;
-        trans.customerName = customerName;
-        trans.rentDate = rentDate;
-        trans.returnDate = returnDate;
-        trans.totalPrice = book->rentalPrice;
-        
-        book->isAvailable = false;
-        transactions.push_back(trans);
-        saveData();
-    }
-}
-
-void BookRentalSystem::displayTransactions() const {
-    cout << "\nTransaction History:\n";
-    cout << "ID\tBook ID\tCustomer\tRent Date\tReturn Date\tPrice\n";
-    cout << "--------------------------------------------------------\n";
-    for (const auto& trans : transactions) {
-        cout << trans.id << "\t"
-             << trans.bookId << "\t"
-             << trans.customerName << "\t"
-             << trans.rentDate << "\t"
-             << trans.returnDate << "\t"
-             << trans.totalPrice << "\n";
-    }
-}
-
-bool BookRentalSystem::loadData() {
-    ifstream file(dataFileName);
-    if (!file) return false;
+    string title, author, isbn;
+    double price;
     
-    string line;
-    // Read books
-    while (getline(file, line)) {
-        if (line == "---TRANSACTIONS---") break;
-        
-        Book book;
-        stringstream ss(line);
-        ss >> book.id >> book.title >> book.author >> book.rentalPrice >> book.isAvailable;
-        books.push_back(book);
-        if (book.id >= nextBookId) nextBookId = book.id + 1;
-    }
-    
-    // Read transactions
-    while (getline(file, line)) {
-        Transaction trans;
-        stringstream ss(line);
-        ss >> trans.id >> trans.bookId >> trans.customerName 
-           >> trans.rentDate >> trans.returnDate >> trans.totalPrice;
-        transactions.push_back(trans);
-        if (trans.id >= nextTransactionId) nextTransactionId = trans.id + 1;
-    }
-    
-    return true;
+    cout << "\nAdd New Book\n";
+    cout << "Enter title: ";
+    cin.ignore();
+    getline(cin, title);
+    cout << "Enter author: ";
+    getline(cin, author);
+    cout << "Enter ISBN: ";
+    cin >> isbn;
+    cout << "Enter rental price: ";
+    cin >> price;
+
+    books.push_back(Book(nextBookId++, title, author, isbn, price));
+    cout << "Book added successfully!\n";
 }
 
-bool BookRentalSystem::saveData() const {
-    ofstream file(dataFileName);
-    if (!file) return false;
-    
-    // Save books
-    for (const auto& book : books) {
-        file << book.id << " " << book.title << " " << book.author << " "
-             << book.rentalPrice << " " << book.isAvailable << "\n";
+void viewBooks() {
+    cout << "\nBook List\n";
+    cout << "ID\tTitle\tAuthor\tISBN\tPrice\tAvailable\n";
+    for (const Book& book : books) {
+        cout << book.getBookId() << "\t"
+             << book.getTitle() << "\t"
+             << book.getAuthor() << "\t"
+             << book.getIsbn() << "\t"
+             << book.getRentalPrice() << "\t"
+             << (book.getAvailability() ? "Yes" : "No") << "\n";
     }
-    
-    file << "---TRANSACTIONS---\n";
-    
-    // Save transactions
-    for (const auto& trans : transactions) {
-        file << trans.id << " " << trans.bookId << " " << trans.customerName << " "
-             << trans.rentDate << " " << trans.returnDate << " " << trans.totalPrice << "\n";
-    }
-    
-    return true;
 }
 
-void BookRentalSystem::displayMenu() const {
-    cout << "\nBook Rental System Menu:\n";
-    cout << "1. Add Book\n";
-    cout << "2. Edit Book\n";
-    cout << "3. Delete Book\n";
-    cout << "4. Display Books\n";
-    cout << "5. Create Transaction\n";
-    cout << "6. Display Transactions\n";
-    cout << "0. Exit\n";
-    cout << "Choose an option: ";
-}
+void rentBook() {
+    if (!currentUser || currentUser->getIsAdmin()) {
+        cout << "Only regular users can rent books.\n";
+        return;
+    }
 
-void BookRentalSystem::run() {
-    while (true) {
-        displayMenu();
-        int choice;
-        cin >> choice;
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    viewBooks();
+    int bookId;
+    cout << "\nEnter book ID to rent: ";
+    cin >> bookId;
 
-        switch (choice) {
-            case 1: {
-                string title, author;
-                double price;
-                cout << "Enter book title: ";
-                getline(cin, title);
-                cout << "Enter author: ";
-                getline(cin, author);
-                cout << "Enter rental price: ";
-                cin >> price;
-                addBook(title, author, price);
-                break;
-            }
-            case 2: {
-                int id;
-                string title, author;
-                double price;
-                cout << "Enter book ID to edit: ";
-                cin >> id;
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                cout << "Enter new title: ";
-                getline(cin, title);
-                cout << "Enter new author: ";
-                getline(cin, author);
-                cout << "Enter new rental price: ";
-                cin >> price;
-                editBook(id, title, author, price);
-                break;
-            }
-            case 3: {
-                int id;
-                cout << "Enter book ID to delete: ";
-                cin >> id;
-                deleteBook(id);
-                break;
-            }
-            case 4:
-                displayBooks();
-                break;
-            case 5: {
-                int bookId;
-                string customerName, rentDate, returnDate;
-                cout << "Enter book ID: ";
-                cin >> bookId;
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                cout << "Enter customer name: ";
-                getline(cin, customerName);
-                cout << "Enter rent date (DD-MM-YYYY): ";
-                getline(cin, rentDate);
-                cout << "Enter return date (DD-MM-YYYY): ";
-                getline(cin, returnDate);
-                createTransaction(bookId, customerName, rentDate, returnDate);
-                break;
-            }
-            case 6:
-                displayTransactions();
-                break;
-            case 0:
+    for (Book& book : books) {
+        if (book.getBookId() == bookId) {
+            if (!book.getAvailability()) {
+                cout << "Book is not available for rent.\n";
                 return;
-            default:
-                cout << "Invalid option!\n";
+            }
+            book.setAvailability(false);
+            transactions.push_back(Transaction(nextTransactionId++, currentUser->getUserId(), bookId));
+            cout << "Book rented successfully!\n";
+            return;
         }
+    }
+    cout << "Book not found.\n";
+}
+
+void returnBook() {
+    if (!currentUser || currentUser->getIsAdmin()) {
+        cout << "Only regular users can return books.\n";
+        return;
+    }
+
+    cout << "\nYour Active Rentals:\n";
+    bool hasActiveRentals = false;
+    for (Transaction& trans : transactions) {
+        if (trans.getUserId() == currentUser->getUserId() && !trans.getIsReturned()) {
+            hasActiveRentals = true;
+            cout << "Transaction ID: " << trans.getTransactionId()
+                 << ", Book ID: " << trans.getBookId() << "\n";
+        }
+    }
+
+    if (!hasActiveRentals) {
+        cout << "You have no active rentals.\n";
+        return;
+    }
+
+    int transId;
+    cout << "Enter transaction ID to return: ";
+    cin >> transId;
+
+    for (Transaction& trans : transactions) {
+        if (trans.getTransactionId() == transId) {
+            if (trans.getIsReturned()) {
+                cout << "This book has already been returned.\n";
+                return;
+            }
+            trans.returnBook();
+            for (Book& book : books) {
+                if (book.getBookId() == trans.getBookId()) {
+                    book.setAvailability(true);
+                    break;
+                }
+            }
+            cout << "Book returned successfully!\n";
+            if (trans.getTotalFine() > 0) {
+                cout << "Late return fine: Rp" << trans.getTotalFine() << "\n";
+            }
+            return;
+        }
+    }
+    cout << "Transaction not found.\n";
+}
+
+void viewTransactions() {
+    cout << "\nTransaction History\n";
+    bool found = false;
+    for (const Transaction& trans : transactions) {
+        if (!currentUser->getIsAdmin() && trans.getUserId() != currentUser->getUserId()) {
+            continue;
+        }
+        found = true;
+        trans.displayInfo();
+        cout << "------------------------\n";
+    }
+    if (!found) {
+        cout << "No transactions found.\n";
     }
 }
 
 int main() {
-    BookRentalSystem system("rental_data.txt");
-    system.run();
+    cout << "Welcome to Book Rental System\n";
+    
+    int choice;
+    do {
+        displayMenu();
+        cout << "Enter your choice: ";
+        cin >> choice;
+        
+        switch (choice) {
+            case 1: registerUser(); break;
+            case 2: registerAdmin(); break;
+            case 3: login(); break;
+            case 4: if (currentUser) viewBooks(); break;
+            case 5: if (currentUser && currentUser->getIsAdmin()) addBook(); break;
+            case 6: if (currentUser && !currentUser->getIsAdmin()) rentBook(); break;
+            case 7: if (currentUser && !currentUser->getIsAdmin()) returnBook(); break;
+            case 8: if (currentUser) viewTransactions(); break;
+            case 0: cout << "Thank you for using Book Rental System!\n"; break;
+            default: cout << "Invalid choice. Please try again.\n";
+        }
+    } while (choice != 0);
+    
+    // Cleanup
+    for (auto user : users) {
+        delete user;
+    }
+    
     return 0;
+}
+
+void displayMenu() {
+    cout << "\n=== Book Rental System ===\n";
+    if (!currentUser) {
+        cout << "1. Register as User\n"
+             << "2. Register as Admin\n"
+             << "3. Login\n";
+    } else {
+        cout << "4. View Books\n";
+        if (currentUser->getIsAdmin()) {
+            cout << "5. Add Book\n";
+        } else {
+            cout << "6. Rent Book\n"
+                 << "7. Return Book\n";
+        }
+        cout << "8. View Transactions\n";
+    }
+    cout << "0. Exit\n";
 }
