@@ -1,10 +1,12 @@
 #include "Book.h"
+#include "DB.h"
 #include "User.h"
 #include "Transaction.h"
 #include "global.h"
 #include <iostream>
 #include <vector>
 #include <limits>
+#include <iomanip>
 
 Book::Book(int id, const std::string& title, const std::string& author, 
            const std::string& isbn, double price) 
@@ -59,76 +61,86 @@ void Book::addBook() {
         return;  
     }  
 
-    books.push_back(Book(nextBookId++, title, author, isbn, price));  
+    Book newBook(nextBookId++, title, author, isbn, price);
+    books.push_back(newBook);
+    
+    // Simpan buku ke database
+    DB db("books.txt");
+    db.saveBooks(std::vector<Book>{newBook});
+
     std::cout << "Book added successfully!\n";  
 }
-// void Book::addBook() {  
-//     // Periksa apakah pengguna saat ini null atau bukan admin  
-//     if (!currentUser || !currentUser->getIsAdmin()) {  
-//         std::cout << "Access denied. Admin privileges required.\n";  
-//         return;  
-//     }  
 
-//     std::string title, author, isbn;  
-//     double price;  
-    
-//     std::cout << "\nAdd New Book\n";  
-//     std::cout << "Enter title: ";  
-//     std::cin.ignore();  
-//     std::getline(std::cin, title);  
-//     std::cout << "Enter author: ";  
-//     std::getline(std::cin, author);  
-//     std::cout << "Enter ISBN: ";  
-//     std::cin >> isbn;  
-//     std::cout << "Enter rental price: ";  
-//     std::cin >> price;  
 
-//     books.push_back(Book(nextBookId++, title, author, isbn, price));  
-//     std::cout << "Book added successfully!\n";  
-// }
+void Book::viewBooks() {  
+      
+    // Muat buku dari file sebelum menampilkan  
+    DB db("books.txt");  
+    db.loadBooks(books);  
 
-void Book::viewBooks() {
-    for (const Book& book : books) {
-        std::cout << book.getBookId() << "\t"
-                  << book.getTitle() << "\t"
-                  << book.getAuthor() << "\t"
-                  << book.getIsbn() << "\t"
-                  << book.getRentalPrice() << "\t"
-                  << (book.getAvailability() ? "Yes" : "No") << "\n";
-    }
+    // Header  
+    std::cout << "\n" << std::left   
+              << std::setw(5) << "ID"   
+              << std::setw(20) << "Title"   
+              << std::setw(20) << "Author"   
+              << std::setw(15) << "ISBN"   
+              << std::setw(10) << "Price"   
+              << "Available\n";  
+    std::cout << std::string(70, '-') << "\n";  
+
+    // Iterate and format  
+    for (const Book& book : books) {  
+        std::cout << std::left   
+                  << std::setw(5) << book.getBookId()   
+                  << std::setw(20) << (book.getTitle().length() > 18 ? book.getTitle().substr(0, 18) + "..." : book.getTitle())  
+                  << std::setw(20) << (book.getAuthor().length() > 18 ? book.getAuthor().substr(0, 18) + "..." : book.getAuthor())  
+                  << std::setw(15) << book.getIsbn()   
+                  << std::setw(10) << book.getRentalPrice()   
+                  << (book.getAvailability() ? "Yes" : "No") << "\n";  
+    }  
+
+    std::cout << std::string(70, '-') << "\n";  
+    std::cout << "Total Books: " << books.size() << "\n";  
 }
 
+void Book::rentBook() {  
+    if (currentUser->getIsAdmin()) {  
+        std::cout << "Only regular users can rent books.\n";  
+        return;  
+    }  
 
-void Book::rentBook() {
-    if (currentUser->getIsAdmin()) {
-        std::cout << "Only regular users can rent books.\n";
-        return;
-    }
+    // Muat buku dari file terlebih dahulu  
+    DB db("books.txt");  
+    db.loadBooks(books);  
 
-    // Assuming viewBooks function is defined elsewhere
-    viewBooks();
-    int bookId;
-    std::cout << "\nEnter book ID to rent: ";
-    std::cin >> bookId;
+    viewBooks();  
+    int bookId;  
+    std::cout << "\nEnter book ID to rent: ";  
+    std::cin >> bookId;  
 
-    for (Book& book : books) {
-        if (book.getBookId() == bookId) {
-            // Check if book is available for rent
-            if (!book.getAvailability()) {
-                std::cout << "Book is not available for rent.\n";
-                return;
-            }
-            // Set the availability to false
-            book.setAvailability(false);
-            // Create a new transaction
-            transactions.push_back(Transaction(nextTransactionId++, currentUser->getUserId(), bookId));
-            std::cout << "Book rented successfully!\n";
-            return;
-        }
-    }
-    std::cout << "Book not found.\n";
+    for (Book& book : books) {  
+        if (book.getBookId() == bookId) {  
+            // Periksa ketersediaan buku  
+            if (!book.getAvailability()) {  
+                std::cout << "Book is not available for rent.\n";  
+                return;  
+            }  
+            
+            // Set ketersediaan buku menjadi false  
+            book.setAvailability(false);  
+            
+            // Buat transaksi baru  
+            transactions.push_back(Transaction(nextTransactionId++, currentUser->getUserId(), bookId));  
+            
+            // Update ketersediaan buku di database  
+            db.saveBooks(books);  
+            
+            std::cout << "Book rented successfully!\n";  
+            return;  
+        }  
+    }  
+    std::cout << "Book not found.\n";  
 }
-
 
 
 

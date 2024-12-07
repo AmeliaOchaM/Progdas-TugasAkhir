@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include "User.h"
+#include "Book.h"
 #include "iostream"
 
 class DB {
@@ -14,6 +15,8 @@ public:
     DB(const char* fileName){
     DB::fileName = fileName;}
     void saveUser(const User& data);
+    void saveBooks(const std::vector<Book>& books);  
+    void loadBooks(std::vector<Book>& books);
 };
 
 #endif

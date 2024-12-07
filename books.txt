@@ -1,0 +1,2 @@
+1,Pengantar C++,John Doe,ISBN-001,29.99,1
+2,Struktur Data,Jane Smith,ISBN-002,39.99,1

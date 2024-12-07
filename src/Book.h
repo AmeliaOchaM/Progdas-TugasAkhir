@@ -32,6 +32,7 @@ public:
     static void addBook();
     static void rentBook();
     static void viewBooks();
+    
 
 };
 

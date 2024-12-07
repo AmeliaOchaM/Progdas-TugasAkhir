@@ -10,13 +10,6 @@
 
 using namespace std;
 
-// Global storage (in a real application, this would be in a database)
-vector<Book> books;
-vector<User*> users;
-vector<Transaction> transactions;
-int nextBookId = 1;
-int nextTransactionId = 1;
-
 void displayMenu();
 
 int main() {
