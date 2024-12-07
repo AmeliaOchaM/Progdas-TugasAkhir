@@ -27,6 +27,11 @@ public:
     // Setters
     void setAvailability(bool status);
     void setRentalPrice(double price);
+
+    static void addBook();
+    static void rentBook();
+    static void viewBooks();
+
 };
 
 #endif

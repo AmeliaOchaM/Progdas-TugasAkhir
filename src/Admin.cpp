@@ -15,3 +15,4 @@ void Admin::displayInfo() const {
     std::cout << "Role: " << role << "\n"
               << "Type: Admin\n";
 }
+

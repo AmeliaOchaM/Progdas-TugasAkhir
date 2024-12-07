@@ -31,9 +31,10 @@ public:
     bool getIsReturned() const;
     
     // Methods
-    void returnBook();
+    static void returnBook();
     void calculateFine();
     void displayInfo() const;
+    static void viewTransactions();
 };
 
 #endif

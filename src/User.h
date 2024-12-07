@@ -17,16 +17,25 @@ public:
     User(int id, const std::string& username, const std::string& password,
          const std::string& name, const std::string& email);
     
+    
+    static User* currentUser;
+    static std::vector<User*> users;
+    
     // Getters
     int getUserId() const;
     std::string getUsername() const;
     std::string getName() const;
     std::string getEmail() const;
     bool getIsAdmin() const;
+
     
     // Methods
     bool verifyPassword(const std::string& inputPassword) const;
     virtual void displayInfo() const;
+    static void login();
+    static void registerUser();
+    static void registerAdmin();
 };
 
 #endif
+
