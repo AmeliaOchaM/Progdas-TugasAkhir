@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <fstream>
 #include "User.h"
 #include "Admin.h"
 #include "Book.h"
@@ -27,43 +28,6 @@ void viewBooks();
 void rentBook();
 void returnBook();
 void viewTransactions();
-
-// Function implementations
-void registerUser() {
-    string username, password, name, email;
-    cout << "\nUser Registration\n";
-    cout << "Enter username: ";
-    cin >> username;
-    cout << "Enter password: ";
-    cin >> password;
-    cout << "Enter name: ";
-    cin.ignore();
-    getline(cin, name);
-    cout << "Enter email: ";
-    cin >> email;
-
-    users.push_back(new User(nextUserId++, username, password, name, email));
-    cout << "User registered successfully!\n";
-}
-
-void registerAdmin() {
-    string username, password, name, email, role;
-    cout << "\nAdmin Registration\n";
-    cout << "Enter username: ";
-    cin >> username;
-    cout << "Enter password: ";
-    cin >> password;
-    cout << "Enter name: ";
-    cin.ignore();
-    getline(cin, name);
-    cout << "Enter email: ";
-    cin >> email;
-    cout << "Enter role: ";
-    cin >> role;
-
-    users.push_back(new Admin(nextUserId++, username, password, name, email, role));
-    cout << "Admin registered successfully!\n";
-}
 
 void login() {
     string username, password;
@@ -210,6 +174,21 @@ void viewTransactions() {
     }
 }
 
+class DB {
+public:
+    std::ifstream in;
+    std::ofstream out;
+    std::string fileName;
+
+    DB(const char* fileName) : fileName(fileName) {}
+
+    void save(const User& data) {
+        out.open(fileName, std::ios::app);
+        out << data.getUserId() << "," << data.getUsername() << ","  << "," << data.getName() << "," << data.getEmail() << "," << (data.getIsAdmin() ? "Admin" : "User") << "\n";
+        out.close();
+    }
+};
+
 int main() {
     cout << "Welcome to Book Rental System\n";
     
@@ -258,4 +237,60 @@ void displayMenu() {
         cout << "8. View Transactions\n";
     }
     cout << "0. Exit\n";
+}
+class Database {
+public:
+    static void saveUser(const User& user) {
+        ofstream out("users.txt", ios::app);
+        if (out.is_open()) {
+            out << user.getUserId() << ","
+                << user.getUsername() << ","
+                << user.getName() << ","
+                << user.getEmail() << ","
+                << (user.getIsAdmin() ? "Admin" : "User") << "\n";
+            out.close();
+        } else {
+            cerr << "Unable to open file for writing.\n";
+        }
+    }
+};
+
+void registerUser() {
+    string username, password, name, email;
+    cout << "\nUser Registration\n";
+    cout << "Enter username: ";
+    cin >> username;
+    cout << "Enter password: ";
+    cin >> password;
+    cout << "Enter name: ";
+    cin.ignore();
+    getline(cin, name);
+    cout << "Enter email: ";
+    cin >> email;
+
+    User* newUser = new User(nextUserId++, username, password, name, email);
+    users.push_back(newUser);
+    Database::saveUser(*newUser);
+    cout << "User registered successfully!\n";
+}
+
+void registerAdmin() {
+    string username, password, name, email, role;
+    cout << "\nAdmin Registration\n";
+    cout << "Enter username: ";
+    cin >> username;
+    cout << "Enter password: ";
+    cin >> password;
+    cout << "Enter name: ";
+    cin.ignore();
+    getline(cin, name);
+    cout << "Enter email: ";
+    cin >> email;
+    cout << "Enter role: ";
+    cin >> role;
+
+    Admin* newAdmin = new Admin(nextUserId++, username, password, name, email, role);
+    users.push_back(newAdmin);
+    Database::saveUser(*newAdmin);
+    cout << "Admin registered successfully!\n";
 }
