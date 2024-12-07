@@ -6,6 +6,7 @@
 #include "Book.h"
 #include "iostream"
 
+class Transaction;
 class DB {
 public:
     std::ifstream in;
@@ -17,6 +18,8 @@ public:
     void saveUser(const User& data);
     void saveBooks(const std::vector<Book>& books);  
     void loadBooks(std::vector<Book>& books);
+    void saveTransactions(const std::vector<Transaction>& transactions);
+    void loadTransactions(std::vector<Transaction>& transactions);
 };
 
 #endif

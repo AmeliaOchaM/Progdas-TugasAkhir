@@ -2,6 +2,7 @@
 #include "Admin.h"
 #include "User.h"
 #include "global.h"
+#include "Transaction.h"
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -92,4 +93,62 @@ void DB::loadBooks(std::vector<Book>& books) {
 
     // Debug: Cetak jumlah buku yang dimuat  
     std::cout << "Jumlah buku yang dimuat: " << books.size() << std::endl;  
+}
+
+void DB::saveTransactions(const std::vector<Transaction>& transactions) {  
+    std::ofstream outFile(fileName, std::ios::app);  
+    if (!outFile.is_open()) {  
+        std::cerr << "Error: Unable to open transactions file for writing.\n";  
+        return;  
+    }  
+
+    for (const auto& trans : transactions) {  
+        outFile << trans.getTransactionId() << ","  
+                << trans.getUserId() << ","  
+                << trans.getBookId() << ","  
+                << (trans.getIsReturned() ? "1" : "0") << ","  
+                << trans.getTotalFine() << "\n";  
+    }  
+    outFile.close();  
+} 
+
+void DB::loadTransactions(std::vector<Transaction>& transactions) {  
+    std::ifstream inFile(fileName);  
+    if (!inFile.is_open()) {  
+        std::cerr << "Tidak dapat membuka file transaksi: " << fileName << std::endl;  
+        return;  
+    }  
+
+    transactions.clear();  // Bersihkan transaksi yang ada sebelumnya  
+    std::string line;  
+    while (std::getline(inFile, line)) {  
+        std::istringstream iss(line);  
+        std::string transIdStr, userIdStr, bookIdStr, isReturnedStr, totalFineStr;  
+        
+        // Parsing dengan delimiter koma  
+        if (std::getline(iss, transIdStr, ',') &&  
+            std::getline(iss, userIdStr, ',') &&  
+            std::getline(iss, bookIdStr, ',') &&  
+            std::getline(iss, isReturnedStr, ',') &&  
+            std::getline(iss, totalFineStr)) {  
+            
+            int transId = std::stoi(transIdStr);  
+            int userId = std::stoi(userIdStr);  
+            int bookId = std::stoi(bookIdStr);  
+            bool isReturned = (isReturnedStr == "1");  
+            double totalFine = std::stod(totalFineStr);  
+
+            // Buat objek Transaction   
+            Transaction newTransaction(transId, userId, bookId);  
+            newTransaction.setIsReturned(isReturned);  
+            // newTransaction.setTotalFine(totalFine);  
+            
+            transactions.push_back(newTransaction);  
+        }  
+    }  
+
+    inFile.close();  
+
+    // Debug: Cetak jumlah transaksi yang dimuat  
+    std::cout << "Jumlah transaksi yang dimuat: " << transactions.size() << std::endl;  
 }

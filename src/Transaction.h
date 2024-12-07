@@ -34,7 +34,10 @@ public:
     static void returnBook();
     void calculateFine();
     void displayInfo() const;
+    void setIsReturned(bool returned);
+    static Transaction* findTransactionById(std::vector<Transaction>& transactions, int transactionId);
     static void viewTransactions();
+
 };
 
 #endif

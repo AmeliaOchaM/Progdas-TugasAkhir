@@ -133,7 +133,11 @@ void Book::rentBook() {
             transactions.push_back(Transaction(nextTransactionId++, currentUser->getUserId(), bookId));  
             
             // Update ketersediaan buku di database  
-            db.saveBooks(books);  
+            db.saveBooks(books); 
+            
+            // Simpan transaksi ke database
+            DB dbTrans("transactions.txt");
+            dbTrans.saveTransactions(std::vector<Transaction>{transactions.back()}); 
             
             std::cout << "Book rented successfully!\n";  
             return;  
