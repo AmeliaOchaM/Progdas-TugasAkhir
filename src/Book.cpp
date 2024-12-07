@@ -100,7 +100,7 @@ void Book::viewBooks() {
 
 
 void Book::rentBook() {
-    if (!currentUser->getIsAdmin()) {
+    if (currentUser->getIsAdmin()) {
         std::cout << "Only regular users can rent books.\n";
         return;
     }
