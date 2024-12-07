@@ -12,6 +12,10 @@ protected:
     std::string name;
     std::string email;
     bool isAdmin;
+    std::string dbUsername;
+    std::string dbPassword;
+    std::string dbName;
+    std::string dbEmail;
 
 public:
     User(int id, const std::string& username, const std::string& password,
@@ -26,6 +30,7 @@ public:
     std::string getUsername() const;
     std::string getName() const;
     std::string getEmail() const;
+    std::string getPassword() const;
     bool getIsAdmin() const;
 
     
@@ -35,6 +40,8 @@ public:
     static void login();
     static void registerUser();
     static void registerAdmin();
+    void SetDbUsername(const std::string& username);
+    std::string getDbUsername() const;
 };
 
 #endif
