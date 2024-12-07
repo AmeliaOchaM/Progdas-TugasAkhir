@@ -1,8 +1,10 @@
 #include "Book.h"
-#include <iostream>
-#include <vector>
 #include "User.h"
 #include "Transaction.h"
+#include "global.h"
+#include <iostream>
+#include <vector>
+#include <limits>
 
 Book::Book(int id, const std::string& title, const std::string& author, 
            const std::string& isbn, double price) 
@@ -21,34 +23,69 @@ void Book::setRentalPrice(double price) { rentalPrice = price; }
 
 extern std::vector<Book> books;
 extern int nextBookId;
-User* currentUser;
 extern std::vector<Transaction> transactions;
 extern int nextTransactionId;
 
-
-void Book::addBook() {
-    if (!currentUser || !currentUser->getIsAdmin()) {
-        std::cout << "Access denied. Admin privileges required.\n";
-        return;
-    }
-
-    std::string title, author, isbn;
-    double price;
+void Book::addBook() {  
+    // Pastikan currentUser tidak null  
+    if (currentUser == nullptr) {  
+        std::cout << "FATAL ERROR: No user is logged in.\n";  
+        return;  
+    }  
     
-    std::cout << "\nAdd New Book\n";
-    std::cout << "Enter title: ";
-    std::cin.ignore();
-    std::getline(std::cin, title);
-    std::cout << "Enter author: ";
-    std::getline(std::cin, author);
-    std::cout << "Enter ISBN: ";
-    std::cin >> isbn;
-    std::cout << "Enter rental price: ";
-    std::cin >> price;
+    // Periksa status admin  
+    if (!currentUser->getIsAdmin()) {  
+        std::cout << "Access denied. Admin privileges required.\n";  
+        return;  
+    }  
 
-    books.push_back(Book(nextBookId++, title, author, isbn, price));
-    std::cout << "Book added successfully!\n";
+    std::string title, author, isbn;  
+    double price;  
+    
+    std::cout << "\nAdd New Book\n";  
+    std::cout << "Enter title: ";  
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');  
+    std::getline(std::cin, title);  
+    std::cout << "Enter author: ";  
+    std::getline(std::cin, author);  
+    std::cout << "Enter ISBN: ";  
+    std::getline(std::cin, isbn);  
+    std::cout << "Enter rental price: ";  
+    std::cin >> price;  
+
+    // Validasi input  
+    if (title.empty() || author.empty() || isbn.empty() || price <= 0) {  
+        std::cout << "Invalid input. Book not added.\n";  
+        return;  
+    }  
+
+    books.push_back(Book(nextBookId++, title, author, isbn, price));  
+    std::cout << "Book added successfully!\n";  
 }
+// void Book::addBook() {  
+//     // Periksa apakah pengguna saat ini null atau bukan admin  
+//     if (!currentUser || !currentUser->getIsAdmin()) {  
+//         std::cout << "Access denied. Admin privileges required.\n";  
+//         return;  
+//     }  
+
+//     std::string title, author, isbn;  
+//     double price;  
+    
+//     std::cout << "\nAdd New Book\n";  
+//     std::cout << "Enter title: ";  
+//     std::cin.ignore();  
+//     std::getline(std::cin, title);  
+//     std::cout << "Enter author: ";  
+//     std::getline(std::cin, author);  
+//     std::cout << "Enter ISBN: ";  
+//     std::cin >> isbn;  
+//     std::cout << "Enter rental price: ";  
+//     std::cin >> price;  
+
+//     books.push_back(Book(nextBookId++, title, author, isbn, price));  
+//     std::cout << "Book added successfully!\n";  
+// }
 
 void Book::viewBooks() {
     for (const Book& book : books) {
@@ -61,8 +98,9 @@ void Book::viewBooks() {
     }
 }
 
+
 void Book::rentBook() {
-    if (!currentUser || currentUser->getIsAdmin()) {
+    if (!currentUser->getIsAdmin()) {
         std::cout << "Only regular users can rent books.\n";
         return;
     }
@@ -75,11 +113,14 @@ void Book::rentBook() {
 
     for (Book& book : books) {
         if (book.getBookId() == bookId) {
+            // Check if book is available for rent
             if (!book.getAvailability()) {
                 std::cout << "Book is not available for rent.\n";
                 return;
             }
+            // Set the availability to false
             book.setAvailability(false);
+            // Create a new transaction
             transactions.push_back(Transaction(nextTransactionId++, currentUser->getUserId(), bookId));
             std::cout << "Book rented successfully!\n";
             return;

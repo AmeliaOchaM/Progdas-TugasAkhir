@@ -22,7 +22,6 @@ public:
          const std::string& name, const std::string& email);
     
     
-    static User* currentUser;
     static std::vector<User*> users;
     
     // Getters
@@ -31,13 +30,15 @@ public:
     std::string getName() const;
     std::string getEmail() const;
     std::string getPassword() const;
-    bool getIsAdmin() const;
-
+    virtual bool getIsAdmin() const {   
+        return isAdmin;   
+    } 
     
     // Methods
     bool verifyPassword(const std::string& inputPassword) const;
     virtual void displayInfo() const;
     static void login();
+    static void loginAdmin();
     static void registerUser();
     static void registerAdmin();
     void SetDbUsername(const std::string& username);
@@ -45,4 +46,3 @@ public:
 };
 
 #endif
-
