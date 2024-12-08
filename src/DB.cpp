@@ -106,6 +106,7 @@ void DB::saveTransactions(const std::vector<Transaction>& transactions) {
         outFile << trans.getTransactionId() << ","  
                 << trans.getUserId() << ","  
                 << trans.getBookId() << ","  
+                << trans.getRentalPrice() << ","
                 << (trans.getIsReturned() ? "1" : "0") << ","  
                 << trans.getTotalFine() << "\n";  
     }  

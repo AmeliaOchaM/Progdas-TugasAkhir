@@ -36,7 +36,17 @@ bool User::verifyPassword(const std::string& inputPassword) const {
     // Compare the input password with the stored password  
     return password == inputPassword;  
 }  
-
+void User::displayUserInfo() const {  
+    if (currentUser) {  
+        std::cout << "\n===== User Information =====\n";  
+        std::cout << "User ID: " << currentUser->getUserId() << "\n";  
+        std::cout << "Username: " << currentUser->getUsername() << "\n";  
+        std::cout << "Name: " << currentUser->getName() << "\n";  
+        std::cout << "Email: " << currentUser->getEmail() << "\n";  
+    } else {  
+        std::cout << "No user is currently logged in.\n";  
+    }  
+}
 void User::login() {  
     std::string username, password;  
     std::cout << "\nLogin\n";  
@@ -75,10 +85,17 @@ void User::login() {
 
     if (!found) {  
         std::cout << "Invalid username or password.\n";  
+        login(); // recursive login  
     }  
 
-    inFile.close();  
+    inFile.close(); 
+    // Setelah login berhasil  
+    if (currentUser) {  
+        currentUser->displayUserInfo();  
+    }  
 }
+
+
 
 void User::loginAdmin() {  
     DB db("admin.txt");  

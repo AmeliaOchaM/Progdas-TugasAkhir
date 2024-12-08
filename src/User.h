@@ -43,6 +43,7 @@ public:
     static void registerAdmin();
     void SetDbUsername(const std::string& username);
     std::string getDbUsername() const;
+    void displayUserInfo() const;
 };
 
 #endif

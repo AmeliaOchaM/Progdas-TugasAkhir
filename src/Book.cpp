@@ -113,6 +113,21 @@ void Book::rentBook() {
     DB db("books.txt");  
     db.loadBooks(books);  
 
+    // Muat transaksi untuk mendapatkan ID terakhir  
+    DB dbTrans("transactions.txt");  
+    std::vector<Transaction> existingTransactions;  
+    dbTrans.loadTransactions(existingTransactions);  
+
+    // Update nextTransactionId jika perlu  
+    if (!existingTransactions.empty()) {  
+        // Cari ID transaksi terbesar  
+        int maxTransactionId = 0;  
+        for (const auto& trans : existingTransactions) {  
+            maxTransactionId = std::max(maxTransactionId, trans.getTransactionId());  
+        }  
+        nextTransactionId = maxTransactionId + 1;  
+    }  
+
     viewBooks();  
     int bookId;  
     std::cout << "\nEnter book ID to rent: ";  
@@ -129,15 +144,21 @@ void Book::rentBook() {
             // Set ketersediaan buku menjadi false  
             book.setAvailability(false);  
             
-            // Buat transaksi baru  
-            transactions.push_back(Transaction(nextTransactionId++, currentUser->getUserId(), bookId));  
+            // Buat transaksi baru dengan ID yang bertambah  
+            Transaction newTransaction(nextTransactionId, currentUser->getUserId(), bookId);  
+            transactions.push_back(newTransaction);  
+            
+            // Cetak ID transaksi untuk konfirmasi  
+            std::cout << "Transaction ID: " << nextTransactionId << std::endl;  
+            
+            // Increment ID untuk transaksi berikutnya  
+            nextTransactionId++;  
             
             // Update ketersediaan buku di database  
-            db.saveBooks(books); 
+            db.saveBooks(books);   
             
-            // Simpan transaksi ke database
-            DB dbTrans("transactions.txt");
-            dbTrans.saveTransactions(std::vector<Transaction>{transactions.back()}); 
+            // Simpan transaksi ke database  
+            dbTrans.saveTransactions(std::vector<Transaction>{newTransaction});   
             
             std::cout << "Book rented successfully!\n";  
             return;  
@@ -145,8 +166,3 @@ void Book::rentBook() {
     }  
     std::cout << "Book not found.\n";  
 }
-
-
-
-
-

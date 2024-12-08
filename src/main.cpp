@@ -29,7 +29,7 @@ int main() {
             case 5: if (GLOBAL_H::currentUser) Book::viewBooks(); break;
             case 6: if (currentUser && currentUser->getIsAdmin()) Book::addBook(); break;
             case 7: if (currentUser && !currentUser->getIsAdmin()) Book::rentBook(); break;
-            case 8: if (currentUser && currentUser->getIsAdmin()) Transaction::returnBook(); break;
+            case 8: if (currentUser && !currentUser->getIsAdmin()) Transaction::returnBook(); break;
             case 9: if (currentUser) Transaction::viewTransactions(); break;
             case 0: cout << "Thank you for using Book Rental System!\n"; break;
             default: cout << "Invalid choice. Please try again.\n";
@@ -49,7 +49,7 @@ void displayMenu() {
     if (!currentUser) {
         cout << "1. Register as User\n"
              << "2. Register as Admin\n"
-             << "3. Login\n"
+             << "3. User Login\n"
              << "4. Admin Login\n"; // Added admin login option
     } else {
         cout << "5. View Books\n";

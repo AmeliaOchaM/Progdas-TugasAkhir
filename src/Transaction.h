@@ -11,6 +11,7 @@ private:
     int transactionId;
     int userId;
     int bookId;
+    int rentalPrice;
     std::time_t rentDate;
     std::time_t dueDate;
     std::time_t returnDate;
@@ -29,6 +30,7 @@ public:
     std::time_t getReturnDate() const;
     double getTotalFine() const;
     bool getIsReturned() const;
+    int getRentalPrice() const;
     
     // Methods
     static void returnBook();
@@ -37,6 +39,7 @@ public:
     void setIsReturned(bool returned);
     static Transaction* findTransactionById(std::vector<Transaction>& transactions, int transactionId);
     static void viewTransactions();
+    // static void saveTransactions(const std::vector<Transaction>& transactions);
 
 };
 
