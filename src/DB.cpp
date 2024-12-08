@@ -116,40 +116,84 @@ void DB::saveTransactions(const std::vector<Transaction>& transactions) {
 void DB::loadTransactions(std::vector<Transaction>& transactions) {  
     std::ifstream inFile(fileName);  
     if (!inFile.is_open()) {  
-        std::cerr << "Tidak dapat membuka file transaksi: " << fileName << std::endl;  
+        std::cerr << "Error: Cannot open transactions file: " << fileName << std::endl;  
         return;  
     }  
 
-    transactions.clear();  // Bersihkan transaksi yang ada sebelumnya  
     std::string line;  
     while (std::getline(inFile, line)) {  
-        std::istringstream iss(line);  
-        std::string transIdStr, userIdStr, bookIdStr, isReturnedStr, totalFineStr;  
-        
-        // Parsing dengan delimiter koma  
-        if (std::getline(iss, transIdStr, ',') &&  
-            std::getline(iss, userIdStr, ',') &&  
-            std::getline(iss, bookIdStr, ',') &&  
-            std::getline(iss, isReturnedStr, ',') &&  
-            std::getline(iss, totalFineStr)) {  
-            
-            int transId = std::stoi(transIdStr);  
-            int userId = std::stoi(userIdStr);  
-            int bookId = std::stoi(bookIdStr);  
-            bool isReturned = (isReturnedStr == "1");  
-            double totalFine = std::stod(totalFineStr);  
+        std::istringstream ss(line);  
+        std::string field;  
+        std::vector<std::string> fields;  
 
-            // Buat objek Transaction   
-            Transaction newTransaction(transId, userId, bookId);  
-            newTransaction.setIsReturned(isReturned);  
-            // newTransaction.setTotalFine(totalFine);  
-            
-            transactions.push_back(newTransaction);  
+        while (std::getline(ss, field, ',')) {  
+            fields.push_back(field);  
+        }  
+
+        // Debug: Print raw transaction line  
+        std::cout << "Loading Transaction Line: " << line << std::endl;  
+
+        // Ensure correct number of fields  
+        if (fields.size() == 6) {  
+            try {  
+                Transaction trans(  
+                    std::stoi(fields[0]),  // Transaction ID  
+                    std::stoi(fields[1]),  // User ID  
+                    std::stoi(fields[2])   // Book ID  
+                );  
+                
+                // Set additional details  
+                trans.setIsReturned(fields[4] == "1");  
+                
+                transactions.push_back(trans);  
+            } catch (const std::exception& e) {  
+                std::cerr << "Error parsing transaction: " << line   
+                          << ", Error: " << e.what() << std::endl;  
+            }  
+        } else {  
+            std::cerr << "Invalid transaction format: " << line << std::endl;  
         }  
     }  
 
-    inFile.close();  
-
-    // Debug: Cetak jumlah transaksi yang dimuat  
-    std::cout << "Jumlah transaksi yang dimuat: " << transactions.size() << std::endl;  
+    std::cout << "Total Transactions Loaded: " << transactions.size() << std::endl;  
 }
+// void DB::loadTransactions(std::vector<Transaction>& transactions) {  
+//     std::ifstream inFile(fileName);  
+//     if (!inFile.is_open()) {  
+//         std::cerr << "Tidak dapat membuka file transaksi: " << fileName << std::endl;  
+//         return;  
+//     }  
+
+//     transactions.clear();  // Bersihkan transaksi yang ada sebelumnya  
+//     std::string line;  
+//     while (std::getline(inFile, line)) {  
+//         std::istringstream iss(line);  
+//         std::string transIdStr, userIdStr, bookIdStr, isReturnedStr, totalFineStr;  
+        
+//         // Parsing dengan delimiter koma  
+//         if (std::getline(iss, transIdStr, ',') &&  
+//             std::getline(iss, userIdStr, ',') &&  
+//             std::getline(iss, bookIdStr, ',') &&  
+//             std::getline(iss, isReturnedStr, ',') &&  
+//             std::getline(iss, totalFineStr)) {  
+            
+//             int transId = std::stoi(transIdStr);  
+//             int userId = std::stoi(userIdStr);  
+//             int bookId = std::stoi(bookIdStr);  
+//             bool isReturned = (isReturnedStr == "1");  
+//             double totalFine = std::stod(totalFineStr);  
+
+//             // Buat objek Transaction   
+//             Transaction newTransaction(transId, userId, bookId);  
+//             newTransaction.setIsReturned(isReturned);  
+//             // newTransaction.setTotalFine(totalFine);  
+            
+//             transactions.push_back(newTransaction);  
+//         }  
+//     }  
+
+//     inFile.close();  
+
+//     // Debug: Cetak jumlah transaksi yang dimuat  
+//     std::cout << "Jumlah transaksi yang dimuat: " << transactions.size() << std::endl;  
+// }

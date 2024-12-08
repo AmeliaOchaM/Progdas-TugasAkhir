@@ -144,8 +144,8 @@ void Book::rentBook() {
             // Set ketersediaan buku menjadi false  
             book.setAvailability(false);  
             
-            // Buat transaksi baru dengan ID yang bertambah  
-            Transaction newTransaction(nextTransactionId, currentUser->getUserId(), bookId);  
+            // Buat transaksi baru dengan ID yang bertambah dan rental price sesuai dengan book  
+            Transaction newTransaction(nextTransactionId, currentUser->getUserId(), bookId, book.getRentalPrice(), false, 0.0);  
             transactions.push_back(newTransaction);  
             
             // Cetak ID transaksi untuk konfirmasi  
