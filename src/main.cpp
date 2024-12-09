@@ -47,6 +47,13 @@ int main() {
     return 0;
 }
 
+/**
+ * Displays the main menu of the Book Rental System.
+ * If no user is logged in, the menu shows options to register as a user or admin, and login options.
+ * If a user is logged in, additional options to view books and transactions are displayed.
+ * Admins have the option to add books, while regular users can rent and return books.
+ * The function also provides an option to exit the system.
+ */
 void displayMenu() {
     cout << "\n=== Book Rental System ===\n";
     if (!currentUser) {
@@ -63,6 +70,8 @@ void displayMenu() {
                  << "8. Return Book\n";
         }
         cout << "9. View Transactions\n";
+        cout << "10. Debug Tools\n";
     }
     cout << "0. Exit\n";
 };
+

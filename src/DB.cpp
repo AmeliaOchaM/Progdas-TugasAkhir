@@ -192,20 +192,20 @@ void DB::loadTransactions(std::vector<Transaction>& transactions) {
             fields.push_back(field);  
         }  
 
-// Debug: Print raw transaction line  
-        // std::cout << "Loading Transaction Line: " << line << std::endl;  
+        // Debug: Print raw transaction line  
+        std::cout << "Loading Transaction Line: " << line << std::endl;  
 
         // Ensure correct number of fields  
         if (fields.size() == 6) {  
             try {  
                 Transaction trans(  
-                    std::stoi(fields[0]),  // Transaction ID  
-                    std::stoi(fields[1]),  // User ID  
-                    std::stoi(fields[2])   // Book ID  
+                    std::stoi(fields[0]),    // Transaction ID  
+                    std::stoi(fields[1]),    // User ID  
+                    std::stoi(fields[2]),    // Book ID  
+                    std::stoi(fields[3]),    // Rental Price  
+                    fields[4] == "1",        // Is Returned  
+                    std::stod(fields[5])     // Total Fine  
                 );  
-                
-                // Set additional details  
-                trans.setIsReturned(fields[4] == "1");  
                 
                 transactions.push_back(trans);  
             } catch (const std::exception& e) {  
@@ -216,9 +216,8 @@ void DB::loadTransactions(std::vector<Transaction>& transactions) {
             std::cerr << "Invalid transaction format: " << line << std::endl;  
         }  
     }  
-    
-    // std::cout << "Total Transactions Loaded: " << transactions.size() << std::endl;  
 }
+
 // void DB::loadTransactions(std::vector<Transaction>& transactions) {  
 //     std::ifstream inFile(fileName);  
 //     if (!inFile.is_open()) {  

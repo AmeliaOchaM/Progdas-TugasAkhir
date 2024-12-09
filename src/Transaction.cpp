@@ -11,8 +11,9 @@
 
 Transaction::Transaction(int transId, int userId, int bookId)  
     : transactionId(transId), userId(userId), bookId(bookId) {  
+    // Set the rental date to the current time  
     rentDate = std::time(nullptr);  
-    dueDate = rentDate + (7 * 24 * 60 * 60); // 7 days rental period  
+    dueDate = rentDate + (7 * 24 * 60 * 60 );  
     isReturned = false;  
     totalFine = 0.0;  
     rentalPrice = 0; // Default rental price  
@@ -23,7 +24,7 @@ Transaction::Transaction(int transId, int userId, int bookId, int rentalPrice, b
     : transactionId(transId), userId(userId), bookId(bookId),   
       rentalPrice(rentalPrice), isReturned(isReturned), totalFine(totalFine) {  
     rentDate = std::time(nullptr);  
-    dueDate = rentDate + (7 * 24 * 60 * 60); // 7 days rental period  
+    dueDate = rentDate + (7 * 24 * 60 * 60 );   
     
     if (isReturned) {  
         returnDate = std::time(nullptr);  
@@ -194,36 +195,50 @@ void Transaction::returnBook() {
 
 // Method untuk menghitung denda  
 double Transaction::calculateLateFine(int bookId, std::time_t dueDate) {  
-    // Cari buku untuk mendapatkan rental price  
-    auto bookIt = std::find_if(books.begin(), books.end(),  
-        [bookId](const Book&book) { return book.getBookId() == bookId; });  
-
-    if (bookIt == books.end()) {  
-        std::cerr << "Book with ID " << bookId << " not found.\n";  
-        return 0.0;  
-    }  
-
+    // Time calculation debugging  
     std::time_t now = std::time(nullptr);  
 
-    // Validasi waktu  
+    // Detailed time validation  
     if (now == -1 || dueDate == -1) {  
-        std::cerr << "Error in time calculation.\n";  
+        std::cerr << "CRITICAL ERROR: Invalid time calculation\n";  
         return 0.0;  
     }  
 
-    if (now > dueDate) {  
-        // Gunakan difftime untuk perhitungan yang aman  
-        double secondsDiff = std::difftime(now, dueDate);  
+    // Load books from file to ensure we have the book data  
+    DB dbBooks("books.txt");  
+    std::vector<Book> loadedBooks;  
+    dbBooks.loadBooks(loadedBooks);  
 
-        // Konversi ke hari, bulatkan ke atas  
-        int daysLate = static_cast<int>(std::ceil(secondsDiff / (24 * 60 * 60)));  
+    // Find book for rental price  
+    auto bookIt = std::find_if(loadedBooks.begin(), loadedBooks.end(),  
+        [bookId](const Book&book) {   
+            return book.getBookId() == bookId;   
+        });  
 
-        return daysLate * (bookIt->getRentalPrice() * 0.5);  
+    // Book not found case  
+    if (bookIt == loadedBooks.end()) {  
+        std::cerr << "ERROR: Book with ID " << bookId << " not found!\n";  
+        return 0.0;  
     }  
 
-    return 0.0;  
-}  
+    // Check if book is overdue  
+    if (now > dueDate) {  
+        // Safe time difference calculation  
+        double secondsDiff = std::difftime(now, dueDate);  
 
+        // Convert to days, rounding up  
+        int daysLate = static_cast<int>(std::ceil(secondsDiff / (24 * 60 * 60)));  
+
+        // Fine calculation formula  
+        // Misalnya 50% dari harga sewa per hari keterlambatan  
+        double fine = daysLate * (bookIt->getRentalPrice() * 0.5);  
+
+        return fine;  
+    }  
+
+    // Not overdue  
+    return 0.0;  
+}
 // Modifikasi method setIsReturned  
 void Transaction::setIsReturned(bool returned) {   
     isReturned = returned;   
@@ -353,6 +368,8 @@ void Transaction::viewTransactions() {
             // Cari buku terkait  
             std::string bookTitle = "Unknown";  
             double rentalPrice = 0.0;  
+            
+            // Cari buku yang terkait dengan transaksi ini  
             for (const auto& book : books) {  
                 if (book.getBookId() == trans.getBookId()) {  
                     bookTitle = book.getTitle();  
@@ -360,13 +377,21 @@ void Transaction::viewTransactions() {
                     break;  
                 }  
             }  
+            
+            // Gunakan total fine dari transaksi  
+            double calculatedFine = trans.getTotalFine();  
+            
+            // Jika belum dikembalikan, hitung fine real-time  
+            if (!trans.getIsReturned()) {  
+                calculatedFine = calculateLateFine(trans.getBookId(), trans.getDueDate());  
+            }  
 
             std::cout << "Transaction ID: " << trans.getTransactionId()   
                       << " | User ID: " << trans.getUserId()  
                       << " | Book: " << bookTitle  
                       << " | Rental Price: Rp" << rentalPrice  
                       << " | Returned: " << (trans.getIsReturned() ? "Yes" : "No")  
-                      << " | Fine: Rp" << trans.getTotalFine() << "\n";  
+                      << " | Fine: Rp" << std::fixed << std::setprecision(2) << calculatedFine << "\n";  
         }  
     }   
     // Jika user biasa, tampilkan hanya transaksi milik user tersebut  
@@ -386,20 +411,29 @@ void Transaction::viewTransactions() {
                     }  
                 }  
 
+                // Gunakan total fine dari transaksi  
+                double calculatedFine = trans.getTotalFine();  
+                
+                // Jika belum dikembalikan, hitung fine real-time  
+                if (!trans.getIsReturned()) {  
+                    calculatedFine = calculateLateFine(trans.getBookId(), trans.getDueDate());  
+                }  
+
                 std::cout << "Transaction ID: " << trans.getTransactionId()   
                           << " | Book: " << bookTitle  
                           << " | Rental Price: Rp" << rentalPrice  
                           << " | Returned: " << (trans.getIsReturned() ? "Yes" : "No")  
-                          << " | Fine: Rp" << trans.getTotalFine() << "\n";  
+                          << " | Fine: Rp" << std::fixed << std::setprecision(2) << calculatedFine << "\n";  
                 hasTransactions = true;  
             }  
         }  
 
+        //Jika tidak memiliki transaksi  
         if (!hasTransactions) {  
             std::cout << "You have no transaction history.\n";  
         }  
     }  
-}  
+}
 
 // Tambahan method untuk mencari transaksi berdasarkan ID  
 Transaction* Transaction::findTransactionById(std::vector<Transaction>& transactions, int transactionId) {  
