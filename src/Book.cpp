@@ -186,12 +186,7 @@ void Book::rentBook() {
                 0.0  
             );  
 
-            // Tambahkan validasi user ID  
-            if (newTransaction.getUserId() != currentUser->getUserId()) {  
-                std::cerr << "ERROR: User ID mismatch!" << std::endl;  
-                return;  
-            }  
-
+            // Tambahkan transaksi baru ke dalam vektor  
             transactions.push_back(newTransaction);  
             
             // Increment ID untuk transaksi berikutnya  
