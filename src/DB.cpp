@@ -8,32 +8,94 @@
 #include <fstream>
 #include <sstream>
 
-void DB::saveUser(const User& user) {  
-    std::ofstream outFile(fileName, std::ios::app);  
+void DB::saveUsers(const std::vector<User*>& userList) {  
+    std::ofstream outFile(fileName, std::ios::trunc);  // Use trunc to overwrite  
     if (!outFile.is_open()) {  
-        std::cerr << "Unable to open file for writing" << std::endl;  
+        std::cerr << "Unable to open file for writing: " << fileName << std::endl;  
         return;  
     }  
 
-    // Cek apakah ini admin  
-    const Admin* adminUser = dynamic_cast<const Admin*>(&user);  
-    if (adminUser) {  
-        // Simpan dengan format: username,password,name,email,code  
-        outFile << adminUser->getUsername() << ","  
-                << adminUser->getPassword() << ","  
-                << adminUser->getName() << ","  
-                << adminUser->getEmail() << ","  
-                << adminUser->getAdminCode() << std::endl;  
-    } else {  
-        // Simpan user biasa  
-        outFile << user.getUsername() << ","  
-                << user.getPassword() << ","  
-                << user.getName() << ","  
-                << user.getEmail() << std::endl;  
+    for (const auto& user : userList) {  
+        // Check if it's an admin user  
+        const Admin* adminUser = dynamic_cast<const Admin*>(user);  
+        if (adminUser) {  
+            // Save admin with admin code  
+            outFile << user->getUserId() << ","  
+                    << adminUser->getUsername() << ","  
+                    << adminUser->getPassword() << ","  
+                    << adminUser->getName() << ","  
+                    << adminUser->getEmail() << ","  
+                    << adminUser->getAdminCode() << std::endl;  
+        } else {  
+            // Save regular user  
+            outFile << user->getUserId() << ","  
+                    << user->getUsername() << ","  
+                    << user->getPassword() << ","  
+                    << user->getName() << ","  
+                    << user->getEmail() << std::endl;  
+        }  
     }  
 
     outFile.close();  
 }
+
+void DB::loadUsers(std::vector<User*>& userList) {  
+    userList.clear();  
+    
+    std::ifstream file(fileName);  
+    if (!file.is_open()) {  
+        std::cout << "Could not open user file: " << fileName << std::endl;  
+        return;  
+    }  
+
+    std::string line;  
+    while (std::getline(file, line)) {  
+        std::vector<std::string> fields;  
+        std::stringstream ss(line);  
+        std::string field;  
+
+        // Split line by comma  
+        while (std::getline(ss, field, ',')) {  
+            fields.push_back(field);  
+        }  
+
+        // Validate number of fields  
+        if (fields.size() == 5 || fields.size() == 6) {  
+            int userId = std::stoi(fields[0]);  
+            
+            if (fields.size() == 6) {  
+                // This is an admin user  
+                Admin* adminUser = new Admin(  
+                    userId,   
+                    fields[1],    // username  
+                    fields[2],    // password  
+                    fields[3],    // name  
+                    fields[4],    // email  
+                    fields[5]     // admin code  
+                );  
+                userList.push_back(adminUser);  
+            } else {  
+                // This is a regular user  
+                User* user = new User(  
+                    userId,   
+                    fields[1],    // username  
+                    fields[2],    // password  
+                    fields[3],    // name  
+                    fields[4]     // email  
+                );  
+                userList.push_back(user);  
+            }  
+        }  
+    }  
+
+    file.close();  
+
+    // Update nextUserId if needed  
+    if (!userList.empty()) {  
+        nextUserId = userList.back()->getUserId() + 1;  
+    }  
+}
+
 
 void DB::saveBooks(const std::vector<Book>& books) {
     std::ofstream outFile(fileName, std::ios::trunc);

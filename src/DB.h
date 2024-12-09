@@ -15,11 +15,12 @@ public:
 
     DB(const char* fileName){
     DB::fileName = fileName;}
-    void saveUser(const User& data);
+    void saveUsers(const std::vector<User*>& userList);
     void saveBooks(const std::vector<Book>& books);  
     void loadBooks(std::vector<Book>& books);
     void saveTransactions(const std::vector<Transaction>& transactions);
     void loadTransactions(std::vector<Transaction>& transactions);
+    void loadUsers(std::vector<User*>& users);
 };
 
 #endif

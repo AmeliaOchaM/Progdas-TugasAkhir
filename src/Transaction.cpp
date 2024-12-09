@@ -89,18 +89,11 @@ extern std::vector<Book> books;
 
 // Di Transaction.cpp  
 void Transaction::returnBook() {  
-    // Debug: Print total number of transactions  
-    std::cout << "Debug: Total Transactions: " << transactions.size() << std::endl;  
-
     // Validasi login  
     if (currentUser == nullptr) {  
         std::cout << "Error: No user logged in.\n";  
         return;  
     }  
-
-    // Debug: Print current user details  
-    std::cout << "Debug: Current User ID: " << currentUser->getUserId()   
-              << ", Is Admin: " << (currentUser->getIsAdmin() ? "Yes" : "No") << std::endl;  
 
     // Validasi bukan admin  
     if (currentUser->getIsAdmin()) {  
@@ -108,29 +101,16 @@ void Transaction::returnBook() {
         return;  
     }  
 
-    // Debug: Reload transactions if empty  
-    if (transactions.empty()) {  
-        std::cout << "Transactions vector is empty. Attempting to reload...\n";  
-        
-        // Use DB class to reload transactions  
-        DB dbTrans("transactions.txt");  
-        transactions.clear();  
-        dbTrans.loadTransactions(transactions);  
-        
-        std::cout << "Debug: Reloaded Transactions Count: " << transactions.size() << std::endl;  
-    }  
+    // Load transactions from file to ensure latest data  
+    DB dbTrans("transactions.txt");  
+    std::vector<Transaction> transactions;  
+    dbTrans.loadTransactions(transactions);  
 
     // Tampung transaksi yang perlu diupdate  
     std::vector<Transaction> transactionsToUpdate;  
 
-    // Debug: Detailed transaction checking  
-    std::cout << "Checking Active Transactions:\n";  
-    for (const auto& trans : transactions) {  
-        std::cout << "Transaction ID: " << trans.getTransactionId()   
-                  << ", User ID: " << trans.getUserId()   
-                  << ", Is Returned: " << (trans.getIsReturned() ? "Yes" : "No")   
-                  << std::endl;  
-
+    // Cari transaksi aktif untuk user saat ini  
+    for (auto& trans : transactions) {  
         if (trans.getUserId() == currentUser->getUserId() &&   
             !trans.getIsReturned()) {  
             transactionsToUpdate.push_back(trans);  
@@ -140,7 +120,6 @@ void Transaction::returnBook() {
     // Cek ada transaksi aktif  
     if (transactionsToUpdate.empty()) {  
         std::cout << "You have no active rentals.\n";  
-        std::cout << "Debug: Current User ID: " << currentUser->getUserId() << std::endl;  
         return;  
     }  
     
@@ -158,9 +137,8 @@ void Transaction::returnBook() {
 
     // Proses pengembalian  
     bool transactionFound = false;  
-    Transaction* returnedTransaction = nullptr;  
 
-    for (auto& trans : transactionsToUpdate) {  
+    for (auto& trans : transactions) {  
         if (trans.getTransactionId() == transId) {  
             // Hitung denda  
             double fine = calculateLateFine(trans.getBookId(), trans.getDueDate());  
@@ -170,7 +148,6 @@ void Transaction::returnBook() {
             trans.setTotalFine(fine);  
             
             transactionFound = true;  
-            returnedTransaction = &trans;  
 
             std::cout << "Book returned successfully!\n";  
             if (fine > 0) {  
@@ -186,17 +163,34 @@ void Transaction::returnBook() {
         return;  
     }  
 
-    // Update buku menjadi tersedia  
-    updateBookAvailability(returnedTransaction->getBookId());  
+    // Perbarui file transactions.txt dengan seluruh transaksi terbaru  
+    std::ofstream outFile("transactions.txt", std::ios::trunc);  
+    
+    if (!outFile.is_open()) {  
+        std::cerr << "Error: Cannot open transactions file for writing.\n";  
+        return;  
+    }  
 
-    // Perbarui file transactions.txt  
-    updateTransactionsFile();  
+    // Tulis ulang semua transaksi dengan status terbaru   
+    for (const auto& trans : transactions) {  
+        outFile << trans.getTransactionId() << ","  
+                << trans.getUserId() << ","  
+                << trans.getBookId() << ","  
+                << trans.getRentalPrice() << ","  
+                << (trans.getIsReturned() ? "1" : "0") << ","  
+                << trans.getTotalFine() << "\n";  
+    }  
+
+    outFile.close();  
+    std::cout << "Transactions file updated successfully.\n";  
+
+    // Update buku menjadi tersedia  
+    updateBookAvailability(transId);  
 
     // Update status buku di books.txt  
     updateBooksFile();  
 }  
 
-// Method untuk menghitung denda  
 // Method untuk menghitung denda  
 double Transaction::calculateLateFine(int bookId, std::time_t dueDate) {  
     // Cari buku untuk mendapatkan rental price  
@@ -357,11 +351,11 @@ void Transaction::viewTransactions() {
         for (const auto& trans : transactions) {  
             // Cari buku terkait  
             std::string bookTitle = "Unknown";  
-            double rentalPrice = 0.0;
+            double rentalPrice = 0.0;  
             for (const auto& book : books) {  
                 if (book.getBookId() == trans.getBookId()) {  
                     bookTitle = book.getTitle();  
-                    rentalPrice = book.getRentalPrice();
+                    rentalPrice = book.getRentalPrice();  
                     break;  
                 }  
             }  
@@ -369,7 +363,7 @@ void Transaction::viewTransactions() {
             std::cout << "Transaction ID: " << trans.getTransactionId()   
                       << " | User ID: " << trans.getUserId()  
                       << " | Book: " << bookTitle  
-                      << " | Rental Price: Rp" << rentalPrice
+                      << " | Rental Price: Rp" << rentalPrice  
                       << " | Returned: " << (trans.getIsReturned() ? "Yes" : "No")  
                       << " | Fine: Rp" << trans.getTotalFine() << "\n";  
         }  
@@ -382,18 +376,18 @@ void Transaction::viewTransactions() {
             if (trans.getUserId() == currentUser->getUserId()) {  
                 // Cari buku terkait  
                 std::string bookTitle = "Unknown";  
-                double rentalPrice = 0.0;
+                double rentalPrice = 0.0;  
                 for (const auto& book : books) {  
                     if (book.getBookId() == trans.getBookId()) {  
                         bookTitle = book.getTitle();  
-                        rentalPrice = book.getRentalPrice();
+                        rentalPrice = book.getRentalPrice();  
                         break;  
                     }  
                 }  
 
                 std::cout << "Transaction ID: " << trans.getTransactionId()   
                           << " | Book: " << bookTitle  
-                          << " | Rental Price: Rp" << rentalPrice
+                          << " | Rental Price: Rp" << rentalPrice  
                           << " | Returned: " << (trans.getIsReturned() ? "Yes" : "No")  
                           << " | Fine: Rp" << trans.getTotalFine() << "\n";  
                 hasTransactions = true;  

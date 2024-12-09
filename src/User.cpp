@@ -169,51 +169,107 @@ void User::displayInfo() const {
 }
 
 
-void User::registerUser() {
-    std::string username, password, name, email;
-    std::cout << "\nUser Registration\n";
-    std::cout << "Enter username: ";
-    std::cin >> username;
-    std::cout << "Enter password: ";
-    std::cin >> password;
-    std::cout << "Enter name: ";
-    std::cin.ignore();
-    getline(std::cin, name);
-    std::cout << "Enter email: ";
-    std::cin >> email;
+void User::registerUser() {  
+    std::string username, password, name, email;  
+    
+    std::cout << "\nUser Registration\n";  
+    std::cout << "Enter username: ";  
+    std::cin >> username;  
+    
+    // Check if username already exists  
+    std::ifstream checkFile("user.txt");  
+    std::string line;  
+    while (std::getline(checkFile, line)) {  
+        std::istringstream ss(line);  
+        std::string existingUsername;  
+        std::getline(ss, existingUsername, ',');  
+        
+        if (existingUsername == username) {  
+            std::cout << "Username already exists. Please choose another.\n";  
+            return;  
+        }  
+    }  
+    checkFile.close();  
 
-    User* newUser = new User(nextUserId++, username, password, name, email);
-    users.push_back(newUser);
-    DB db("user.txt"); // Provide the necessary arguments
-    db.saveUser(*newUser);
-    std::cout << "User registered successfully!\n";
-}
+    std::cout << "Enter password: ";  
+    std::cin >> password;  
+    std::cout << "Enter name: ";  
+    std::cin.ignore();  
+    getline(std::cin, name);  
+    std::cout << "Enter email: ";  
+    std::cin >> email;  
 
-void User::registerAdmin() {
-        std::string username, password, name, email, code;
-        std::cout << "\nAdmin Registration\n";
-        std::cout << "Enter username: ";
-        std::cin >> username;
-        std::cout << "Enter password: ";
-        std::cin >> password;
-        std::cout << "Enter name: ";
-        std::cin.ignore();
-        getline(std::cin, name);
-        std::cout << "Enter email: ";
-        std::cin >> email;
-        std::cout << "Enter code: ";
-        std::cin >> code;
+    // Determine next user ID  
+    int newUserId = 1;  
+    std::ifstream idFile("user.txt");  
+    while (std::getline(idFile, line)) {  
+        newUserId++;  
+    }  
+    idFile.close();  
 
-        if (code == "BookXtra97") {
-            Admin* newAdmin = new Admin(nextUserId++, username, password, name, email, code);
-            users.push_back(newAdmin);
-            
-            DB db("admin.txt"); // Save the admin to the admin database
-            db.saveUser(*newAdmin);
-            
-            std::cout << "Admin registered successfully!\n";
-        } else {
-            std::cout << "Invalid code. Please contact the administrator.\n";
-        }
-    }
+    // Append to user.txt  
+    std::ofstream outFile("user.txt", std::ios::app);  
+    outFile << username << ","  
+            << password << ","  
+            << name << ","  
+            << email << std::endl;  
+    outFile.close();  
 
+    std::cout << "User registered successfully with ID: " << newUserId << "\n";  
+} 
+
+void User::registerAdmin() {  
+    std::string username, password, name, email, code;  
+    
+    std::cout << "\nAdmin Registration\n";  
+    std::cout << "Enter username: ";  
+    std::cin >> username;  
+    
+    // Check if username already exists  
+    std::ifstream checkFile("admin.txt");  
+    std::string line;  
+    while (std::getline(checkFile, line)) {  
+        std::istringstream ss(line);  
+        std::string existingUsername;  
+        std::getline(ss, existingUsername, ',');  
+        
+        if (existingUsername == username) {  
+            std::cout << "Username already exists. Please choose another.\n";  
+            return;  
+        }  
+    }  
+    checkFile.close();  
+
+    std::cout << "Enter password: ";  
+    std::cin >> password;  
+    std::cout << "Enter name: ";  
+    std::cin.ignore();  
+    getline(std::cin, name);  
+    std::cout << "Enter email: ";  
+    std::cin >> email;  
+    std::cout << "Enter code: ";  
+    std::cin >> code;  
+
+    if (code == "BookXtra97") {  
+        // Determine next admin ID  
+        int newAdminId = 1;  
+        std::ifstream idFile("admin.txt");  
+        while (std::getline(idFile, line)) {  
+            newAdminId++;  
+        }  
+        idFile.close();  
+
+        // Append to admin.txt  
+        std::ofstream outFile("admin.txt", std::ios::app);  
+        outFile << username << ","  
+                << password << ","  
+                << name << ","  
+                << email << ","  
+                << code << std::endl;  
+        outFile.close();  
+        
+        std::cout << "Admin registered successfully with ID: " << newAdminId << "\n";  
+    } else {  
+        std::cout << "Invalid code. Please contact the administrator.\n";  
+    }  
+}  
