@@ -154,7 +154,7 @@ void DB::loadBooks(std::vector<Book>& books) {
     }  
 
     // Debug: Cetak jumlah buku yang dimuat  
-    std::cout << "Jumlah buku yang dimuat: " << books.size() << std::endl;  
+//     std::cout << "Jumlah buku yang dimuat: " << books.size() << std::endl;  
 }
 
 void DB::saveTransactions(const std::vector<Transaction>& transactions) {  
@@ -192,8 +192,8 @@ void DB::loadTransactions(std::vector<Transaction>& transactions) {
             fields.push_back(field);  
         }  
 
-        // Debug: Print raw transaction line  
-        std::cout << "Loading Transaction Line: " << line << std::endl;  
+// Debug: Print raw transaction line  
+        // std::cout << "Loading Transaction Line: " << line << std::endl;  
 
         // Ensure correct number of fields  
         if (fields.size() == 6) {  
@@ -216,8 +216,8 @@ void DB::loadTransactions(std::vector<Transaction>& transactions) {
             std::cerr << "Invalid transaction format: " << line << std::endl;  
         }  
     }  
-
-    std::cout << "Total Transactions Loaded: " << transactions.size() << std::endl;  
+    
+    // std::cout << "Total Transactions Loaded: " << transactions.size() << std::endl;  
 }
 // void DB::loadTransactions(std::vector<Transaction>& transactions) {  
 //     std::ifstream inFile(fileName);  

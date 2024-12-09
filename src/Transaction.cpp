@@ -18,6 +18,7 @@ Transaction::Transaction(int transId, int userId, int bookId)
     rentalPrice = 0; // Default rental price  
 }  
 
+
 Transaction::Transaction(int transId, int userId, int bookId, int rentalPrice, bool isReturned, double totalFine)  
     : transactionId(transId), userId(userId), bookId(bookId),   
       rentalPrice(rentalPrice), isReturned(isReturned), totalFine(totalFine) {  
@@ -87,7 +88,7 @@ extern std::vector<Transaction> transactions;
 extern User* currentUser;
 extern std::vector<Book> books;
 
-// Di Transaction.cpp  
+// Pengembalian buku
 void Transaction::returnBook() {  
     // Validasi login  
     if (currentUser == nullptr) {  

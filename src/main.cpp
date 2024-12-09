@@ -26,7 +26,7 @@ int main() {
             case 2: User::registerAdmin(); break;
             case 3: User::login(); break;
             case 4: User::loginAdmin(); break; // Added admin login option
-            case 5: if (GLOBAL_H::currentUser) Book::viewBooks(); break;
+            case 5: if (currentUser) Book::viewBooks(); break;
             case 6: if (currentUser && currentUser->getIsAdmin()) Book::addBook(); break;
             case 7: if (currentUser && !currentUser->getIsAdmin()) Book::rentBook(); break;
             case 8: if (currentUser && !currentUser->getIsAdmin()) Transaction::returnBook(); break;
@@ -37,10 +37,13 @@ int main() {
     } while (choice != 0);
     
     // Cleanup
+    // Cleanup memory allocated for users
+    // Iterate through all users and delete them
     for (auto user : users) {
         delete user;
     }
     
+
     return 0;
 }
 
