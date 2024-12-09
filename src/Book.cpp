@@ -41,6 +41,15 @@ void Book::addBook() {
         return;  
     }  
 
+    // Load existing books first to get the correct next book ID  
+    DB db("books.txt");  
+    std::vector<Book> existingBooks;  
+    db.loadBooks(existingBooks);  
+
+    // Determine the next book ID based on the last book in the database  
+    int newBookId = existingBooks.empty() ? 1 :   
+        existingBooks.back().getBookId() + 1;  
+
     std::string title, author, isbn;  
     double price;  
     
@@ -61,16 +70,23 @@ void Book::addBook() {
         return;  
     }  
 
-    Book newBook(nextBookId++, title, author, isbn, price);
-    books.push_back(newBook);
+    // Create new book with the correct ID  
+    Book newBook(newBookId, title, author, isbn, price);  
     
-    // Simpan buku ke database
-    DB db("books.txt");
-    db.saveBooks(std::vector<Book>{newBook});
+    // Append new book to existing books  
+    existingBooks.push_back(newBook);  
+    
+    // Save updated book list  
+    db.saveBooks(existingBooks);  
 
-    std::cout << "Book added successfully!\n";  
+    // Update global books vector  
+    books = existingBooks;  
+
+    // Update global nextBookId  
+    nextBookId = newBookId + 1;  
+
+    std::cout << "Book added successfully with ID: " << newBookId << "\n";  
 }
-
 
 void Book::viewBooks() {  
       
