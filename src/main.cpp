@@ -70,7 +70,6 @@ void displayMenu() {
                  << "8. Return Book\n";
         }
         cout << "9. View Transactions\n";
-        cout << "10. Debug Tools\n";
     }
     cout << "0. Exit\n";
 };

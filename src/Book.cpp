@@ -120,10 +120,19 @@ void Book::viewBooks() {
 }
 
 void Book::rentBook() {  
+    // Pastikan user sudah login  
+    if (currentUser == nullptr) {  
+        std::cout << "Please log in first.\n";  
+        return;  
+    }  
+
     if (currentUser->getIsAdmin()) {  
         std::cout << "Only regular users can rent books.\n";  
         return;  
     }  
+
+    // Debug: Cetak user ID yang sedang login  
+    std::cout << "Current User ID: " << currentUser->getUserId() << std::endl;  
 
     // Muat buku dari file terlebih dahulu  
     DB db("books.txt");  
@@ -160,12 +169,30 @@ void Book::rentBook() {
             // Set ketersediaan buku menjadi false  
             book.setAvailability(false);  
             
-            // Buat transaksi baru dengan ID yang bertambah dan rental price sesuai dengan book  
-            Transaction newTransaction(nextTransactionId, currentUser->getUserId(), bookId, book.getRentalPrice(), false, 0.0);  
-            transactions.push_back(newTransaction);  
-            
-            // Cetak ID transaksi untuk konfirmasi  
+            // Debug: Cetak informasi sebelum membuat transaksi  
+            std::cout << "Creating Transaction:" << std::endl;  
             std::cout << "Transaction ID: " << nextTransactionId << std::endl;  
+            std::cout << "User ID: " << currentUser->getUserId() << std::endl;  
+            std::cout << "Book ID: " << bookId << std::endl;  
+            std::cout << "Rental Price: " << book.getRentalPrice() << std::endl;  
+
+            // Buat transaksi baru dengan ID yang bertambah dan rental price sesuai dengan book  
+            Transaction newTransaction(  
+                nextTransactionId,   
+                currentUser->getUserId(),  // Pastikan menggunakan user ID yang benar  
+                bookId,   
+                book.getRentalPrice(),   
+                false,   
+                0.0  
+            );  
+
+            // Tambahkan validasi user ID  
+            if (newTransaction.getUserId() != currentUser->getUserId()) {  
+                std::cerr << "ERROR: User ID mismatch!" << std::endl;  
+                return;  
+            }  
+
+            transactions.push_back(newTransaction);  
             
             // Increment ID untuk transaksi berikutnya  
             nextTransactionId++;  
@@ -174,7 +201,7 @@ void Book::rentBook() {
             db.saveBooks(books);   
             
             // Simpan transaksi ke database  
-            dbTrans.saveTransactions(std::vector<Transaction>{newTransaction});   
+            dbTrans.saveTransactions(transactions);   
             
             std::cout << "Book rented successfully!\n";  
             return;  

@@ -55,7 +55,6 @@ void User::login() {
     std::cout << "Enter password: ";  
     std::cin >> password;  
 
-    // Open the user database file  
     DB db("user.txt");  
     std::ifstream inFile(db.fileName);  
 
@@ -68,16 +67,18 @@ void User::login() {
     bool found = false;  
     while (std::getline(inFile, line)) {  
         std::istringstream iss(line);  
-        std::string dbUsername, dbPassword, dbName, dbEmail;  
+        std::string dbId, dbUsername, dbPassword, dbName, dbEmail;  
         
+        std::getline(iss, dbId, ',');  
         std::getline(iss, dbUsername, ',');  
         std::getline(iss, dbPassword, ',');  
         std::getline(iss, dbName, ',');  
         std::getline(iss, dbEmail, ',');  
 
         if (dbUsername == username && dbPassword == password) {  
-            currentUser = new User(nextUserId++, dbUsername, dbPassword, dbName, dbEmail);  
-            std::cout << "Login successful!\n";  
+            int userId = std::stoi(dbId);  
+            currentUser = new User(userId, dbUsername, dbPassword, dbName, dbEmail);  
+            std::cout << "Login successful! User ID: " << userId << std::endl;  
             found = true;  
             break;  
         }  
@@ -85,11 +86,10 @@ void User::login() {
 
     if (!found) {  
         std::cout << "Invalid username or password.\n";  
-        login(); // recursive login  
+        return;  
     }  
 
-    inFile.close(); 
-    // Setelah login berhasil  
+    inFile.close();   
     if (currentUser) {  
         currentUser->displayUserInfo();  
     }  
@@ -199,24 +199,39 @@ void User::registerUser() {
     std::cout << "Enter email: ";  
     std::cin >> email;  
 
-    // Determine next user ID  
-    int newUserId = 1;  
+    // Tentukan ID pengguna baru berdasarkan ID terakhir di file  
+    int newUserId = 1; // Default ID jika file kosong  
     std::ifstream idFile("user.txt");  
-    while (std::getline(idFile, line)) {  
-        newUserId++;  
+    if (idFile.is_open()) {  
+        while (std::getline(idFile, line)) {  
+            std::istringstream ss(line);  
+            std::string idStr;  
+            std::getline(ss, idStr, ','); // Ambil ID dari baris  
+            int existingId = std::stoi(idStr);  
+            if (existingId >= newUserId) {  
+                newUserId = existingId + 1; // Increment ID  
+            }  
+        }  
+        idFile.close();  
     }  
-    idFile.close();  
 
     // Append to user.txt  
     std::ofstream outFile("user.txt", std::ios::app);  
-    outFile << username << ","  
+    if (!outFile.is_open()) {  
+        std::cerr << "Unable to open user.txt for writing." << std::endl;  
+        return;  
+    }  
+    
+    // Tulis data pengguna baru dengan ID  
+    outFile << newUserId << ","  
+            << username << ","  
             << password << ","  
             << name << ","  
             << email << std::endl;  
     outFile.close();  
 
     std::cout << "User registered successfully with ID: " << newUserId << "\n";  
-} 
+}
 
 void User::registerAdmin() {  
     std::string username, password, name, email, code;  
